@@ -1,0 +1,53 @@
+containers:
+  build-env:
+    image: meltano/meltano:latest
+    working_directory: /new_project
+#    environment:
+#      PYTHONPATH: "/src"
+#      PYTHONUSERBASE: "/src/.pip-cache"
+#      PIPENV_VENV_IN_PROJECT: true
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/container-user
+    volumes:
+      - local: ./new_project
+        container: /new_project
+        options: cached
+      - local: ./source
+        container: /new_project/source
+        options: cached
+    ports:
+      - local: 8888
+        container: 8888
+  
+tasks:
+  ## Run First! tasks
+  dep:
+    description: Run this before doing the python stuff. It installs the dependencies into the local cache.
+    group: Run First! tasks
+    run:
+      container: build-env
+      command: sh -c 'pip install --user -r requirements.txt'
+    
+  ## Utility tasks
+  dev:
+    description: Display version 
+    group: Utility tasks
+    run:
+      container: build-env
+      command: --version
+
+  ## Run once tasks
+  init:
+    description: Initialize a new project
+    group: Run Once tasks
+    run:
+      container: build-env
+      command: init new_project
+
+  add_csv_ex:
+    description: Initialize a new project
+    group: Run Once tasks
+    run:
+      container: build-env
+      command: add extractor tap-csv
