@@ -17,8 +17,8 @@ containers:
         container: /new_project/source
         options: cached
     ports:
-      - local: 8888
-        container: 8888
+      - local: 5000
+        container: 5000
   
 tasks:
   ## Run First! tasks
@@ -37,6 +37,13 @@ tasks:
       container: build-env
       command: --version
 
+  ui:
+    description: fire up UI-server  
+    group: UI is running, now head over to  http://localhost:5000/
+    run:
+      container: build-env
+      command: ui
+
   ## Run once tasks
   init:
     description: Initialize a new project
@@ -46,8 +53,15 @@ tasks:
       command: init new_project
 
   add_csv_ex:
-    description: Initialize a new project
+    description: Add CSV extractor
     group: Run Once tasks
     run:
       container: build-env
       command: add extractor tap-csv
+
+  add_ps_lo:
+    description: Add CSV extractor
+    group: Run Once tasks
+    run:
+      container: build-env
+      command: add loader target-postgres
