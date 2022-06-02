@@ -2,10 +2,6 @@ containers:
   build-env:
     image: meltano/meltano:latest
     working_directory: /new_project
-#    environment:
-#      PYTHONPATH: "/src"
-#      PYTHONUSERBASE: "/src/.pip-cache"
-#      PIPENV_VENV_IN_PROJECT: true
     run_as_current_user:
       enabled: true
       home_directory: /home/container-user
@@ -16,52 +12,113 @@ containers:
       - local: ./source
         container: /new_project/source
         options: cached
+  build-env_ui:
+    image: meltano/meltano:latest
+    working_directory: /new_project
+    run_as_current_user:
+      enabled: true
+      home_directory: /home/container-user
+    volumes:
+      - local: ./new_project
+        container: /new_project
+        options: cached
+      - local: ./source
+        container: /new_project/source
+        options: cached
+      - local: ./empty_folder # we're mounting an empty folder to delete a subfolder... Not fun I know...
+        container: /new_project/.meltano/run
+        options: cached
     ports:
       - local: 5000
         container: 5000
+  postgres:
+    image: postgres:13.4-bullseye
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: demo
+    ports:
+      - local: 5432
+        container: 5432
+    volumes:
+      - local: ./postgres-data
+        container: /var/lib/postgresql/data
+        options: cached
   
 tasks:
-  ## Run First! tasks
-  dep:
-    description: Run this before doing the python stuff. It installs the dependencies into the local cache.
-    group: Run First! tasks
-    run:
-      container: build-env
-      command: sh -c 'pip install --user -r requirements.txt'
-    
   ## Utility tasks
-  dev:
+  version:
     description: Display version 
     group: Utility tasks
     run:
       container: build-env
       command: --version
 
-  ui:
-    description: fire up UI-server  
-    group: UI is running, now head over to  http://localhost:5000/
+  db:
+    description: Start up DB on its own, possibly do this once to load up the "cache"
+    group: Utility tasks
     run:
-      container: build-env
+      container: postgres
+      
+  ui:
+    description: fire up UI-server, UI is running, now head over to  http://localhost:5000/
+    group: Utility tasks
+    run:
+      container: build-env_ui
       command: ui
 
+  sh:
+    description: Open a shell in our cool build env to debug stuff
+    group: Utility tasks
+    dependencies:
+      - postgres
+    run:
+      container: build-env
+      entrypoint: sh
+      
+  clean:
+    description: Delete meltano project stuff...
+    group: Utility tasks
+    run:
+      container: build-env
+      entrypoint: sh -c 'rm -rf *'
+  
   ## Run once tasks
-  init:
-    description: Initialize a new project
+  1_init:
+    description: Initialize a new project in the "new_project" folder... (delete possible old one first)
     group: Run Once tasks
     run:
       container: build-env
-      command: init new_project
+      entrypoint: sh -c 'rm -rf *; meltano init new_project_tmp; mv new_project_tmp/* .;'
 
-  add_csv_ex:
+  2_add_ex:
     description: Add CSV extractor
     group: Run Once tasks
     run:
       container: build-env
-      command: add extractor tap-csv
+      command: add extractor tap-spreadsheets-anywhere
 
-  add_ps_lo:
-    description: Add CSV extractor
+  3_add_lo:
+    description: Add Postgres target
     group: Run Once tasks
     run:
       container: build-env
       command: add loader target-postgres
+
+  4_cp:
+    description: Add proper config to taps, and source data.
+    group: Run Once tasks
+    run:
+      container: build-env
+      entrypoint: sh -c 'rm meltano.yml; cp ./source/orders.csv ./extract/orders.csv; cp ./source/meltano.yml meltano.yml'
+
+
+## Run as you like tasks
+  5_el:
+    description: Do one el run...
+    group: Run Often tasks
+    dependencies:
+      - postgres
+    run:
+      container: build-env
+      command: run tap-spreadsheets-anywhere target-postgres
