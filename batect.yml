@@ -189,7 +189,25 @@ tasks:
     run:
       container: build-env
       command: run tap-postgres hash-id target-jsonl
-        
-    
+
+## DOING SOME Meta Stuff!
+#
+#  14_add_ge:
+#    description: 1. Add a so-called utility
+#    group: 5. Meta Runs
+#    run:
+#      container: build-env
+#      command: add utility great_expectations
+#
+#  15_init_ge:
+#    description: 2. Init great_expectations
+#    group: 5. Meta Runs
+#    dependencies:
+#      - postgres
+#    run:
+#      container: build-env
+#      entrypoint: sh -c 'cd utilities; meltano invoke great_expectations init'
+#          
+    # meltano add utility great_expectations
     #run tap-spreadsheets-anywhere target-postgres dbt:run  
       
