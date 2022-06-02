@@ -123,29 +123,54 @@ tasks:
       container: build-env
       command: run tap-spreadsheets-anywhere target-postgres 
 
-## DOING SOME T & P
+## DOING SOME Transformation
   6_add_dbt:
     description: 1. Adding a transformer plugin
-    group: 2. T & P Runs
+    group: 2. T  Runs
     run:
       container: build-env
       command: add transformer dbt
 
   7_configure:
     description: 2. Configure the dbt project
-    group: 2. T & P Runs
+    group: 2. T Runs
     run:
       container: build-env
       entrypoint: sh -c 'cp -r source/orders_table transform/models'
 
   8_elt:
     description: 3. Do a dbt run!
-    group: 2. T & P Runs
+    group: 2. T Runs
     dependencies:
       - postgres
     run:
       container: build-env
       command: run tap-spreadsheets-anywhere target-postgres dbt:run
+
+## DOING SOME Reserve ETL/ ELT P
+
+  9_add_jl:
+    description: 1. Add another loader to push to some external target
+    group: 3. P Runs
+    run:
+      container: build-env
+      command: add loader target-jsonl
+
+  10_add_tp:
+    description: 2. Add an Postgres extractor
+    group: 3. P Runs
+    run:
+      container: build-env
+      command: add extractor tap-postgres
+  
+  11_p:
+    description: 3. Run our publishing run....
+    group: 3. P Runs
+    dependencies:
+      - postgres
+    run:
+      container: build-env
+      command: run tap-postgres target-jsonl
       
     
     #run tap-spreadsheets-anywhere target-postgres dbt:run  
