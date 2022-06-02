@@ -3,6 +3,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+postgres-data/*
+!postgres-data/.gitkeep
+empty_folder/*
+!empty_folder/.gitkeep
+new_project/*
+!new_project/.gitkeep
+
 # C extensions
 *.so
 
