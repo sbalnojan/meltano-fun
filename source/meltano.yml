@@ -25,6 +25,12 @@ plugins:
       user: admin
       password: password
       dbname: demo
+  transformers:
+  - name: dbt
+    pip_url: dbt-core~=1.0.0 dbt-postgres~=1.0.0 dbt-redshift~=1.0.0 dbt-snowflake~=1.0.0
+      dbt-bigquery~=1.0.0
+#    target: postgres
+    source_schema: public
 environments:
 - name: dev
   config:
@@ -33,5 +39,12 @@ environments:
       - name: tap-spreadsheets-anywhere
         select:
         - '*.*'
+  env:
+    PG_ADDRESS: postgres
+    PG_PORT: '5432'
+    PG_USERNAME: admin
+    PG_DATABASE: demo
+    PG_PASSWORD: password
+    DBT_TARGET: postgres
 - name: staging
 - name: prod

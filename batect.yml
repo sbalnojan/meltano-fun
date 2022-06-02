@@ -81,44 +81,72 @@ tasks:
     group: Utility tasks
     run:
       container: build-env
-      entrypoint: sh -c 'rm -rf *'
+      entrypoint: sh -c 'rm -rf * -x source/*'
   
   ## Run once tasks
   1_init:
-    description: Initialize a new project in the "new_project" folder... (delete possible old one first)
-    group: Run Once tasks
+    description: Initialize a new project in the "new_project" folder
+    group: 0. Run Once tasks
     run:
       container: build-env
-      entrypoint: sh -c 'rm -rf *; meltano init new_project_tmp; mv new_project_tmp/* .;'
+      entrypoint: sh -c 'meltano init new_project_tmp; mv new_project_tmp/* .;'
 
   2_add_ex:
     description: Add CSV extractor
-    group: Run Once tasks
+    group: 0. Run Once tasks
     run:
       container: build-env
       command: add extractor tap-spreadsheets-anywhere
 
   3_add_lo:
     description: Add Postgres target
-    group: Run Once tasks
+    group: 0. Run Once tasks
     run:
       container: build-env
       command: add loader target-postgres
 
   4_cp:
     description: Add proper config to taps, and source data.
-    group: Run Once tasks
+    group: 0. Run Once tasks
     run:
       container: build-env
       entrypoint: sh -c 'rm meltano.yml; cp ./source/orders.csv ./extract/orders.csv; cp ./source/meltano.yml meltano.yml'
 
 
-## Run as you like tasks
+## DOING AN EL RUN
   5_el:
     description: Do one el run...
-    group: Run Often tasks
+    group: 1. EL Runs
     dependencies:
       - postgres
     run:
       container: build-env
-      command: run tap-spreadsheets-anywhere target-postgres
+      command: run tap-spreadsheets-anywhere target-postgres 
+
+## DOING SOME T & P
+  6_add_dbt:
+    description: 1. Adding a transformer plugin
+    group: 2. T & P Runs
+    run:
+      container: build-env
+      command: add transformer dbt
+
+  7_configure:
+    description: 2. Configure the dbt project
+    group: 2. T & P Runs
+    run:
+      container: build-env
+      entrypoint: sh -c 'cp -r source/orders_table transform/models'
+
+  8_elt:
+    description: 3. Do a dbt run!
+    group: 2. T & P Runs
+    dependencies:
+      - postgres
+    run:
+      container: build-env
+      command: run tap-spreadsheets-anywhere target-postgres dbt:run
+      
+    
+    #run tap-spreadsheets-anywhere target-postgres dbt:run  
+      
