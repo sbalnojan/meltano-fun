@@ -1,0 +1,1 @@
+{"type": "RECORD", "stream": "slack", "record": {"title": "Test Title", "body": "Test Notification"}}

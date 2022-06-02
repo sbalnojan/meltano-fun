@@ -9,12 +9,25 @@ plugins:
     executable: tap-spreadsheets-anywhere
     config:
       tables:
-      - path: file:///new_project/extract #https://dataverse.harvard.edu/api/access/datafile/
+      - path: file:///new_project/extract
         name: orders_table
-        pattern: "orders"
+        pattern: orders
         start_date: '2010-01-01T00:00:00Z'
-        key_properties: ["order_id"]
+        key_properties:
+        - order_id
         format: csv
+  - name: tap-postgres
+    variant: transferwise
+    pip_url: pipelinewise-tap-postgres
+    config:
+      host: postgres
+      port: 5432
+      user: admin
+      password: password
+      dbname: demo
+      default_replication_method: FULL_TABLE
+    select:
+    - analytics-trafo.*
   loaders:
   - name: target-postgres
     variant: transferwise
@@ -25,12 +38,27 @@ plugins:
       user: admin
       password: password
       dbname: demo
+  - name: target-jsonl
+    variant: andyh1203
+    pip_url: target-jsonl
+    config:
+      do_timestamp_file: true
   transformers:
   - name: dbt
     pip_url: dbt-core~=1.0.0 dbt-postgres~=1.0.0 dbt-redshift~=1.0.0 dbt-snowflake~=1.0.0
       dbt-bigquery~=1.0.0
-#    target: postgres
     source_schema: public
+  mappers:
+  - name: transform-field
+    variant: transferwise
+    pip_url: pipelinewise-transform-field
+    mappings:
+    - name: hash-id
+      config:
+        transformations:
+          - field_id: "order_id"
+            tap_stream_name: "analytics-trafo"
+            type: "SET-NULL"
 environments:
 - name: dev
   config:

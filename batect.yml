@@ -171,7 +171,25 @@ tasks:
     run:
       container: build-env
       command: run tap-postgres target-jsonl
-      
+
+## DOING SOME ETL - light transformations /mapping
+
+  12_add_tf:
+    description: 1. Add a so-called mapper to transform.
+    group: 4. ETL Runs
+    run:
+      container: build-env
+      command: add mapper transform-field
+
+  13_etl:
+    description: 2. Add an Postgres extractor
+    group: 4. ETL Runs
+    dependencies:
+      - postgres
+    run:
+      container: build-env
+      command: run tap-postgres hash-id target-jsonl
+        
     
     #run tap-spreadsheets-anywhere target-postgres dbt:run  
       
